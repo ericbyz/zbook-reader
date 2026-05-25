@@ -13,26 +13,51 @@ from flask import Flask, Response, jsonify, request, send_from_directory
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-CONTENT_DIRS = ["ml-tutorial", "ee-tutorial", "docs"]
+CONTENT_DIR = BASE_DIR / "content"
+
+# Project display names
+PROJECT_META = {
+    "ml-tutorial": {"label": "机器学习教程", "icon": "🤖", "desc": "从基础到实战的机器学习完整教程"},
+    "ee-tutorial": {"label": "电气工程教程", "icon": "⚡", "desc": "电路分析与电气工程基础"},
+    "docs": {"label": "文档", "icon": "📄", "desc": "项目文档与学习笔记"},
+}
 
 
-def _scan_files():
-    """Scan all markdown files from content directories."""
-    files = []
-    for d in CONTENT_DIRS:
-        dir_path = BASE_DIR / d
-        if not dir_path.exists():
+def _get_projects():
+    """List available content projects."""
+    projects = []
+    if not CONTENT_DIR.exists():
+        return projects
+    for d in sorted(CONTENT_DIR.iterdir()):
+        if not d.is_dir():
             continue
-        for f in sorted(dir_path.rglob("*.md")):
-            rel = f.relative_to(BASE_DIR)
-            files.append(
-                {
-                    "path": str(rel),
-                    "name": f.name,
-                    "dir": d,
-                    "title": _extract_title(f),
-                }
-            )
+        if d.name.startswith("."):
+            continue
+        meta = PROJECT_META.get(d.name, {})
+        md_files = list(d.rglob("*.md"))
+        projects.append({
+            "id": d.name,
+            "label": meta.get("label", d.name),
+            "icon": meta.get("icon", "📁"),
+            "desc": meta.get("desc", f"{len(md_files)} 篇文档"),
+            "count": len(md_files),
+        })
+    return projects
+
+
+def _scan_files(project_id):
+    """Scan markdown files from a specific project."""
+    dir_path = CONTENT_DIR / project_id
+    if not dir_path.exists():
+        return []
+    files = []
+    for f in sorted(dir_path.rglob("*.md")):
+        rel = f.relative_to(dir_path)
+        files.append({
+            "path": str(rel),
+            "name": f.name,
+            "title": _extract_title(f),
+        })
     return files
 
 
@@ -56,17 +81,29 @@ def index():
     return send_from_directory(app.static_folder, "index.html")
 
 
-@app.route("/api/files")
-def api_files():
-    return jsonify(_scan_files())
+@app.route("/api/projects")
+def api_projects():
+    return jsonify(_get_projects())
+
+
+@app.route("/api/files/<project_id>")
+def api_files(project_id):
+    files = _scan_files(project_id)
+    if not files and not (CONTENT_DIR / project_id).exists():
+        return jsonify({"error": "Project not found"}), 404
+    return jsonify(files)
 
 
 @app.route("/api/content")
 def api_content():
     path = request.args.get("path", "")
-    full = BASE_DIR / path
+    project = request.args.get("project", "")
+    if project:
+        full = CONTENT_DIR / project / path
+    else:
+        full = BASE_DIR / path
     if not full.exists() or not str(full.resolve()).startswith(
-        str(BASE_DIR.resolve())
+        str(CONTENT_DIR.resolve())
     ):
         return jsonify({"error": "File not found"}), 404
     try:
@@ -87,7 +124,6 @@ def api_run():
     with tempfile.TemporaryDirectory() as tmpdir:
         script = os.path.join(tmpdir, "script.py")
         with open(script, "w", encoding="utf-8") as f:
-            # Redirect matplotlib to save figures as base64
             escaped_tmpdir = tmpdir.replace("\\", "\\\\").replace("'", "\\'")
             f.write(
                 "import sys, io, base64, os\n"
@@ -115,12 +151,11 @@ def api_run():
                 capture_output=True,
                 text=True,
                 timeout=30,
-                cwd=str(BASE_DIR),
+                cwd=str(CONTENT_DIR),
             )
             stdout = result.stdout
             stderr = result.stderr
 
-            # Collect generated images
             images = []
             img_dir = os.path.join(tmpdir, "images")
             if os.path.exists(img_dir):
@@ -144,10 +179,12 @@ def api_run():
 @app.route("/images/<path:filepath>")
 def serve_image(filepath):
     """Serve images from content directories."""
-    for d in CONTENT_DIRS:
-        full = BASE_DIR / d / filepath
+    for d in CONTENT_DIR.iterdir():
+        if not d.is_dir():
+            continue
+        full = d / filepath
         if full.exists():
-            return send_from_directory(str(BASE_DIR / d), filepath)
+            return send_from_directory(str(d), filepath)
     return jsonify({"error": "Not found"}), 404
 
 

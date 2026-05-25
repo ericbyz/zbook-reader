@@ -5,7 +5,8 @@
 .playwright-mcp/
 .sisyphus/
 %s/
-.gitrepo/
+.gitrepo*/
+gitrepo-*/
 
 # Python cache
 __pycache__/

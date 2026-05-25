@@ -60,16 +60,58 @@
   a { color: var(--accent); text-decoration: none; }
   a:hover { color: var(--accent-hover); text-decoration: underline; }
 
-  .app { display: flex; height: 100vh; }
+  .landing {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 60px 24px;
+    animation: fadeIn .4s ease;
+  }
+  .landing-title {
+    font-size: 36px; font-weight: 800; color: var(--text-heading);
+    margin-bottom: 8px; letter-spacing: 1px;
+  }
+  .landing-sub {
+    font-size: 15px; color: var(--text-muted); margin-bottom: 48px;
+  }
+  .project-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px; width: 100%; max-width: 960px;
+  }
+  .project-card {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px;
+    padding: 28px 24px; cursor: pointer; transition: all .2s;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .project-card:hover {
+    border-color: var(--accent); transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(108,138,255,.12);
+  }
+  .project-card .card-icon { font-size: 36px; }
+  .project-card .card-label { font-size: 18px; font-weight: 700; color: var(--text-heading); }
+  .project-card .card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+  .project-card .card-count {
+    font-size: 12px; color: var(--accent); font-weight: 600; margin-top: auto;
+    padding-top: 10px; border-top: 1px solid var(--border);
+  }
+
+  .app { display: none; height: 100vh; }
+  .app.active { display: flex; }
+  .landing.hidden { display: none; }
 
   .sidebar {
     width: var(--sidebar-w); min-width: var(--sidebar-w);
     background: var(--sidebar-bg); border-right: 1px solid var(--border);
     display: flex; flex-direction: column; overflow: hidden;
   }
-  .sidebar-header { padding: 20px 16px 12px; border-bottom: 1px solid var(--border); }
+  .sidebar-header { padding: 20px 16px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
   .sidebar-header h1 { font-size: 20px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
   .sidebar-header p { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .back-btn {
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--card-bg); color: var(--text-muted); cursor: pointer;
+    font-size: 16px; display: flex; align-items: center; justify-content: center;
+    transition: all .15s; flex-shrink: 0;
+  }
+  .back-btn:hover { color: var(--text); border-color: var(--accent); }
   .search-box { padding: 12px 16px; }
   .search-box input {
     width: 100%; padding: 8px 12px; border-radius: 8px;
@@ -79,10 +121,6 @@
   .search-box input:focus { border-color: var(--accent); }
   .sidebar-nav { flex: 1; overflow-y: auto; padding: 8px 0; }
   .nav-group { margin-bottom: 4px; }
-  .nav-group-title {
-    padding: 8px 16px 4px; font-size: 11px; text-transform: uppercase;
-    letter-spacing: 1.5px; color: var(--text-muted); font-weight: 600;
-  }
   .nav-item {
     display: block; padding: 6px 16px 6px 24px; font-size: 13px;
     color: var(--text-muted); cursor: pointer; border-left: 3px solid transparent;
@@ -93,14 +131,6 @@
 
   .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
   .main-content { flex: 1; overflow-y: auto; }
-
-  .welcome {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    height: 100%; color: var(--text-muted); text-align: center; padding: 40px;
-  }
-  .welcome h2 { font-size: 28px; color: var(--text); margin-bottom: 12px; }
-  .welcome p { font-size: 15px; max-width: 500px; line-height: 1.7; }
-  .welcome .icon { font-size: 64px; margin-bottom: 24px; opacity: .5; }
 
   .article {
     max-width: var(--article-width); margin: 0 auto; padding: 40px 48px 80px;
@@ -169,7 +199,6 @@
 
   .katex-display { margin: 16px 0; overflow-x: auto; }
 
-  /* Toolbar */
   .toolbar {
     height: var(--toolbar-h); display: flex; align-items: center; justify-content: flex-end;
     padding: 0 16px; background: var(--sidebar-bg); border-bottom: 1px solid var(--border);
@@ -194,7 +223,6 @@
     user-select: none;
   }
 
-  /* Apply font size and line height */
   .article p, .article li, .article td, .article th, .article blockquote {
     font-size: var(--font-size);
     line-height: var(--line-height);
@@ -216,18 +244,28 @@
     .sidebar { position: fixed; left: -100%; z-index: 99; transition: left .3s; height: 100vh; width: 280px; }
     .sidebar.open { left: 0; }
     .article { padding: 20px 16px 60px; }
+    .project-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 
+<div class="landing" id="landing">
+  <div class="landing-title">ZBook</div>
+  <div class="landing-sub">选择一个文档项目开始阅读</div>
+  <div class="project-grid" id="projectGrid"></div>
+</div>
+
 <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">&#9776;</button>
 
-<div class="app">
+<div class="app" id="app">
   <aside class="sidebar">
     <div class="sidebar-header">
-      <h1>ZBook</h1>
-      <p>交互式教程阅读器</p>
+      <button class="back-btn" onclick="goHome()" title="返回项目列表">&#8592;</button>
+      <div>
+        <h1 id="projectTitle">ZBook</h1>
+        <p id="projectDesc"></p>
+      </div>
     </div>
     <div class="search-box">
       <input type="text" placeholder="搜索文件..." id="searchInput" oninput="filterFiles()">
@@ -256,18 +294,17 @@
       </div>
     </div>
     <div class="main-content" id="mainContent">
-      <div class="welcome">
-        <div class="icon">&#128218;</div>
-        <h2>ZBook 教程阅读器</h2>
-        <p>从左侧选择一个教程开始阅读。<br>代码块可以点击「运行」按钮直接执行并查看结果。<br>支持 Python 代码执行和图片输出。</p>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);text-align:center;padding:40px;">
+        <div style="font-size:48px;margin-bottom:20px;opacity:.4;">&#128218;</div>
+        <p>从左侧选择一篇文章开始阅读</p>
       </div>
     </div>
   </main>
 </div>
 
 <script>
-const state = { files: [], currentPath: null, codeBlocks: {} };
-let codeBlockId = 0;
+var state = { projects: [], currentProject: null, files: [], currentPath: null, codeBlocks: {} };
+var codeBlockId = 0;
 
 DOMPurify.addHook('uponSanitizeAttribute', function(node, data) {
   if (data.attrName === 'src' && data.attrValue && data.attrValue.startsWith('data:image/')) {
@@ -276,25 +313,20 @@ DOMPurify.addHook('uponSanitizeAttribute', function(node, data) {
 });
 
 function escapeHtml(s) {
-  const d = document.createElement('div');
+  var d = document.createElement('div');
   d.textContent = s;
   return d.innerHTML;
 }
 
-// Protect math from marked processing by replacing with placeholders
 function protectMath(text) {
-  const mathStore = [];
+  var mathStore = [];
   function store(m) {
     mathStore.push(m);
     return '%%MATH' + (mathStore.length - 1) + '%%';
   }
-  // Protect $$...$$ (display)
   text = text.replace(/\$\$([\s\S]*?)\$\$/g, function(m) { return store(m); });
-  // Protect \[...\] (display)
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, function(m) { return store(m); });
-  // Protect \(...\) (inline)
   text = text.replace(/\\\(([\s\S]*?)\\\)/g, function(m) { return store(m); });
-  // Protect $...$ (inline) — careful not to match currency
   text = text.replace(/\$([^\$\n]+?)\$/g, function(m) { return store(m); });
   return { text: text, mathStore: mathStore };
 }
@@ -312,15 +344,14 @@ function highlightCode(code, lang) {
   } catch { return escapeHtml(code); }
 }
 
-// --- Custom marked extensions for code blocks ---
-const codeExtension = {
+var codeExtension = {
   name: 'codeBlock',
   level: 'block',
-  start(src) { return src.indexOf('\n```'); },
-  tokenizer(src) {
-    const match = src.match(/^```(\w*)\n([\s\S]*?)\n```/);
+  start: function(src) { return src.indexOf('\n```'); },
+  tokenizer: function(src) {
+    var match = src.match(/^```(\w*)\n([\s\S]*?)\n```/);
     if (!match) return;
-    const id = 'cb_' + (codeBlockId++);
+    var id = 'cb_' + (codeBlockId++);
     state.codeBlocks[id] = { code: match[2], lang: match[1] || 'text' };
     return {
       type: 'codeBlock',
@@ -329,13 +360,13 @@ const codeExtension = {
       lang: state.codeBlocks[id].lang,
     };
   },
-  renderer(token) {
-    const block = state.codeBlocks[token.id];
-    const code = block.code;
-    const lang = block.lang;
-    const highlighted = highlightCode(code, lang);
-    const isRunnable = lang === 'python' || lang === 'py';
-    const runBtn = isRunnable ? '<button class="run-btn" data-cb-id="' + token.id + '">运行</button>' : '';
+  renderer: function(token) {
+    var block = state.codeBlocks[token.id];
+    var code = block.code;
+    var lang = block.lang;
+    var highlighted = highlightCode(code, lang);
+    var isRunnable = lang === 'python' || lang === 'py';
+    var runBtn = isRunnable ? '<button class="run-btn" data-cb-id="' + token.id + '">运行</button>' : '';
     return '<div class="code-wrapper">'
       + '<div class="code-header">'
       + '<span class="code-lang">' + escapeHtml(lang) + '</span>'
@@ -346,45 +377,86 @@ const codeExtension = {
   },
 };
 
-// Also handle indented code blocks (no language hint) and fenced via marked defaults
 marked.use({ extensions: [codeExtension] });
 
-// --- File loading ---
-async function loadFiles() {
-  const resp = await fetch('/api/files');
-  state.files = await resp.json();
-  renderSidebar();
+// --- Landing page ---
+async function loadProjects() {
+  var resp = await fetch('/api/projects');
+  state.projects = await resp.json();
+  renderProjects();
 }
 
+function renderProjects() {
+  var grid = document.getElementById('projectGrid');
+  grid.textContent = '';
+  state.projects.forEach(function(p) {
+    var card = document.createElement('div');
+    card.className = 'project-card';
+    card.setAttribute('data-project', p.id);
+    card.innerHTML = '<div class="card-icon">' + p.icon + '</div>'
+      + '<div class="card-label">' + escapeHtml(p.label) + '</div>'
+      + '<div class="card-desc">' + escapeHtml(p.desc) + '</div>'
+      + '<div class="card-count">' + p.count + ' 篇文档</div>';
+    card.addEventListener('click', function() { openProject(p.id); });
+    grid.appendChild(card);
+  });
+}
+
+async function openProject(projectId) {
+  state.currentProject = projectId;
+  codeBlockId = 0;
+  state.codeBlocks = {};
+  state.currentPath = null;
+
+  var project = state.projects.find(function(p) { return p.id === projectId; });
+  document.getElementById('projectTitle').textContent = project ? project.label : projectId;
+  document.getElementById('projectDesc').textContent = project ? project.desc : '';
+
+  document.getElementById('landing').classList.add('hidden');
+  document.getElementById('app').classList.add('active');
+
+  var resp = await fetch('/api/files/' + encodeURIComponent(projectId));
+  state.files = await resp.json();
+  renderSidebar();
+
+  var placeholder = document.createElement('div');
+  placeholder.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);text-align:center;padding:40px;';
+  var icon = document.createElement('div');
+  icon.style.cssText = 'font-size:48px;margin-bottom:20px;opacity:.4;';
+  icon.textContent = '\u{1F4DA}';
+  var msg = document.createElement('p');
+  msg.textContent = '从左侧选择一篇文章开始阅读';
+  placeholder.appendChild(icon);
+  placeholder.appendChild(msg);
+  document.getElementById('mainContent').textContent = '';
+  document.getElementById('mainContent').appendChild(placeholder);
+}
+
+function goHome() {
+  state.currentProject = null;
+  state.files = [];
+  state.currentPath = null;
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('landing').classList.remove('hidden');
+  document.querySelector('.sidebar').classList.remove('open');
+}
+
+// --- Sidebar ---
 function renderSidebar(filter) {
-  const nav = document.getElementById('sidebarNav');
-  const groups = {};
+  var nav = document.getElementById('sidebarNav');
+  nav.textContent = '';
   state.files.forEach(function(f) {
     if (filter && !f.path.toLowerCase().includes(filter.toLowerCase())
         && !f.title.toLowerCase().includes(filter.toLowerCase())) return;
-    if (!groups[f.dir]) groups[f.dir] = [];
-    groups[f.dir].push(f);
+    var item = document.createElement('div');
+    item.className = 'nav-item' + (f.path === state.currentPath ? ' active' : '');
+    item.setAttribute('data-path', f.path);
+    item.setAttribute('title', f.path);
+    item.textContent = f.title;
+    nav.appendChild(item);
   });
-
-  var labels = {
-    'ml-tutorial': '机器学习教程',
-    'ee-tutorial': '电气工程教程',
-    'docs': '文档',
-  };
-
-  var html = '';
-  for (var dir in groups) {
-    html += '<div class="nav-group"><div class="nav-group-title">' + escapeHtml(labels[dir] || dir) + '</div>';
-    groups[dir].forEach(function(f) {
-      var active = f.path === state.currentPath ? ' active' : '';
-      html += '<div class="nav-item' + active + '" data-path="' + escapeHtml(f.path) + '" title="' + escapeHtml(f.path) + '">' + escapeHtml(f.title) + '</div>';
-    });
-    html += '</div>';
-  }
-  nav.innerHTML = html;
 }
 
-// Delegate clicks on nav items
 document.getElementById('sidebarNav').addEventListener('click', function(e) {
   var item = e.target.closest('.nav-item');
   if (item) loadDoc(item.getAttribute('data-path'));
@@ -401,27 +473,33 @@ async function loadDoc(path) {
   renderSidebar(document.getElementById('searchInput').value);
   document.querySelector('.sidebar').classList.remove('open');
 
-  var resp = await fetch('/api/content?path=' + encodeURIComponent(path));
+  var resp = await fetch('/api/content?project=' + encodeURIComponent(state.currentProject) + '&path=' + encodeURIComponent(path));
   var data = await resp.json();
   if (data.error) {
-    document.getElementById('mainContent').innerHTML =
-      '<div class="welcome"><h2>加载失败</h2><p>' + escapeHtml(data.error) + '</p></div>';
+    var errDiv = document.createElement('div');
+    errDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;';
+    var h = document.createElement('h2');
+    h.textContent = '加载失败';
+    var p = document.createElement('p');
+    p.textContent = data.error;
+    errDiv.appendChild(h);
+    errDiv.appendChild(p);
+    document.getElementById('mainContent').textContent = '';
+    document.getElementById('mainContent').appendChild(errDiv);
     return;
   }
   renderMarkdown(data.content, path);
 }
 
-function renderMarkdown(content, basePath) {
+function renderMarkdown(content, filePath) {
   var main = document.getElementById('mainContent');
-  var dir = basePath.substring(0, basePath.lastIndexOf('/'));
+  var dir = filePath.substring(0, filePath.lastIndexOf('/'));
 
-  // Protect math from marked processing
   var protected = protectMath(content);
   var rawHtml;
   try { rawHtml = marked.parse(protected.text); }
   catch(e) { rawHtml = marked(protected.text); }
 
-  // Restore math placeholders
   rawHtml = restoreMath(rawHtml, protected.mathStore);
 
   var cleanHtml = DOMPurify.sanitize(rawHtml, {
@@ -429,9 +507,12 @@ function renderMarkdown(content, basePath) {
     ADD_ATTR: ['onclick', 'data-cb-id', 'target'],
   });
 
-  main.innerHTML = '<div class="article">' + cleanHtml + '</div>';
+  var article = document.createElement('div');
+  article.className = 'article';
+  article.innerHTML = cleanHtml;
+  main.textContent = '';
+  main.appendChild(article);
 
-  // Render KaTeX
   renderMathInElement(main, {
     delimiters: [
       { left: '$$', right: '$$', display: true },
@@ -442,24 +523,21 @@ function renderMarkdown(content, basePath) {
     throwOnError: false,
   });
 
-  // Wire up internal .md links
-  main.querySelectorAll('.article a').forEach(function(a) {
+  article.querySelectorAll('a').forEach(function(a) {
     var href = a.getAttribute('href');
     if (href && !href.startsWith('http') && !href.startsWith('#') && href.endsWith('.md')) {
-      var targetPath = dir + '/' + href;
+      var targetPath = dir ? dir + '/' + href : href;
       a.href = '#';
       a.onclick = function(e) { e.preventDefault(); loadDoc(targetPath); };
     }
   });
 }
 
-// Delegate click on run buttons
 document.getElementById('mainContent').addEventListener('click', function(e) {
   var btn = e.target.closest('.run-btn');
   if (btn) runCode(btn);
 });
 
-// --- Code execution ---
 async function runCode(btn) {
   var cbId = btn.getAttribute('data-cb-id');
   var block = state.codeBlocks[cbId];
@@ -598,9 +676,8 @@ function restoreSettings() {
   } catch(e) {}
 }
 
-// --- Init ---
 restoreSettings();
-loadFiles();
+loadProjects();
 </script>
 </body>
 </html>
