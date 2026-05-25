@@ -1,0 +1,14 @@
+{
+  "reportUndefinedVariable": "none",
+  "reportUnusedImport": "warning",
+  "reportUnusedVariable": "warning",
+  "reportDuplicateImport": "none",
+  "reportMissingImports": "warning",
+  "reportMissingTypeStubs": "none",
+  "reportGeneralTypeIssues": "none",
+  "reportOptionalMemberAccess": "none",
+  "reportOptionalSubscript": "none",
+  "reportPrivateUsage": "none",
+  "pythonVersion": "3.10",
+  "typeCheckingMode": "off"
+}

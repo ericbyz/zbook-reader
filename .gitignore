@@ -1,0 +1,25 @@
+.DS_Store
+
+# Local editor and automation state
+.obsidian/
+.playwright-mcp/
+.sisyphus/
+%s/
+.gitrepo/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Node dependencies and build output
+node_modules/
+dist/
+build/
+
+# Logs
+*.log
