@@ -1,14 +1,15 @@
 """ZBook Web Server - Markdown documentation viewer with code execution."""
 
-import json
 import os
 import subprocess
 import sys
 import tempfile
-import traceback
 from pathlib import Path
 
-from flask import Flask, Response, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory
+from werkzeug.exceptions import BadRequest, NotFound
+
+from web.harness_e import init_harness_e
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 
@@ -21,6 +22,14 @@ PROJECT_META = {
     "ee-tutorial": {"label": "电气工程教程", "icon": "⚡", "desc": "电路分析与电气工程基础"},
     "docs": {"label": "文档", "icon": "📄", "desc": "项目文档与学习笔记"},
 }
+
+HARNESS_E = init_harness_e(
+    app,
+    app_name="zbook-reader",
+    base_dir=BASE_DIR,
+    content_dir=CONTENT_DIR,
+    project_meta=PROJECT_META,
+)
 
 
 def _get_projects():
@@ -47,7 +56,10 @@ def _get_projects():
 
 def _scan_files(project_id):
     """Scan markdown files from a specific project."""
-    dir_path = CONTENT_DIR / project_id
+    try:
+        dir_path = HARNESS_E.project_dir(project_id)
+    except ValueError as exc:
+        raise BadRequest(str(exc)) from exc
     if not dir_path.exists():
         return []
     files = []
@@ -89,8 +101,8 @@ def api_projects():
 @app.route("/api/files/<project_id>")
 def api_files(project_id):
     files = _scan_files(project_id)
-    if not files and not (CONTENT_DIR / project_id).exists():
-        return jsonify({"error": "Project not found"}), 404
+    if not files and not HARNESS_E.project_dir(project_id).exists():
+        raise NotFound("Project not found")
     return jsonify(files)
 
 
@@ -98,14 +110,14 @@ def api_files(project_id):
 def api_content():
     path = request.args.get("path", "")
     project = request.args.get("project", "")
-    if project:
-        full = CONTENT_DIR / project / path
-    else:
-        full = BASE_DIR / path
-    if not full.exists() or not str(full.resolve()).startswith(
-        str(CONTENT_DIR.resolve())
-    ):
-        return jsonify({"error": "File not found"}), 404
+    if not project:
+        raise BadRequest("Project is required")
+    try:
+        full = HARNESS_E.content_file(project, path)
+    except ValueError as exc:
+        raise BadRequest(str(exc)) from exc
+    if not full.exists() or not full.is_file():
+        raise NotFound("File not found")
     try:
         text = full.read_text(encoding="utf-8")
         return jsonify({"content": text, "path": path})
@@ -179,13 +191,13 @@ def api_run():
 @app.route("/images/<path:filepath>")
 def serve_image(filepath):
     """Serve images from content directories."""
-    for d in CONTENT_DIR.iterdir():
-        if not d.is_dir():
-            continue
-        full = d / filepath
-        if full.exists():
-            return send_from_directory(str(d), filepath)
-    return jsonify({"error": "Not found"}), 404
+    if not CONTENT_DIR.exists():
+        raise NotFound("Content directory not found")
+    roots = [d for d in CONTENT_DIR.iterdir() if d.is_dir() and not d.name.startswith(".")]
+    full = HARNESS_E.first_existing(roots, filepath)
+    if not full:
+        raise NotFound("Image not found")
+    return send_from_directory(str(full.parent), full.name)
 
 
 if __name__ == "__main__":
