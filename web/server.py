@@ -1,5 +1,6 @@
 """ZBook Web Server - Markdown documentation viewer with code execution."""
 
+import json
 import os
 import subprocess
 import sys
@@ -15,6 +16,7 @@ app = Flask(__name__, static_folder="static", static_url_path="/static")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 CONTENT_DIR = BASE_DIR / "content"
+IMPORTED_FILE = CONTENT_DIR / ".imported.json"
 
 # Project display names
 PROJECT_META = {
@@ -34,32 +36,44 @@ HARNESS_E = init_harness_e(
 
 def _get_projects():
     """List available content projects."""
+    imported = _load_imported()
     projects = []
-    if not CONTENT_DIR.exists():
-        return projects
-    for d in sorted(CONTENT_DIR.iterdir()):
-        if not d.is_dir():
+    if CONTENT_DIR.exists():
+        for d in sorted(CONTENT_DIR.iterdir()):
+            if not d.is_dir() or d.name.startswith("."):
+                continue
+            meta = PROJECT_META.get(d.name, {})
+            imp = imported.get(d.name)
+            md_files = list(d.rglob("*.md"))
+            projects.append({
+                "id": d.name,
+                "label": meta.get("label") or (imp["label"] if imp else d.name),
+                "icon": meta.get("icon", "\U0001f4da"),
+                "desc": meta.get("desc", f"{len(md_files)} 篇文档"),
+                "count": len(md_files),
+                "imported": d.name in imported,
+            })
+    for book_id, info in imported.items():
+        if any(p["id"] == book_id for p in projects):
             continue
-        if d.name.startswith("."):
+        book_path = Path(info["path"]).resolve()
+        if not book_path.is_dir():
             continue
-        meta = PROJECT_META.get(d.name, {})
-        md_files = list(d.rglob("*.md"))
+        md_files = list(book_path.rglob("*.md"))
         projects.append({
-            "id": d.name,
-            "label": meta.get("label", d.name),
-            "icon": meta.get("icon", "📁"),
-            "desc": meta.get("desc", f"{len(md_files)} 篇文档"),
+            "id": book_id,
+            "label": info.get("label", book_id),
+            "icon": "\U0001f4da",
+            "desc": info.get("desc", f"{len(md_files)} 篇文档"),
             "count": len(md_files),
+            "imported": True,
         })
     return projects
 
 
 def _scan_files(project_id):
     """Scan markdown files from a specific project."""
-    try:
-        dir_path = HARNESS_E.project_dir(project_id)
-    except ValueError as exc:
-        raise BadRequest(str(exc)) from exc
+    dir_path = _resolve_project_dir(project_id)
     if not dir_path.exists():
         return []
     files = []
@@ -88,6 +102,31 @@ def _extract_title(filepath):
     return filepath.name
 
 
+def _load_imported():
+    try:
+        return json.loads(IMPORTED_FILE.read_text(encoding="utf-8")) if IMPORTED_FILE.exists() else {}
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def _save_imported(data):
+    CONTENT_DIR.mkdir(parents=True, exist_ok=True)
+    IMPORTED_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _resolve_project_dir(project_id):
+    imported = _load_imported()
+    if project_id in imported:
+        p = Path(imported[project_id]["path"]).resolve()
+        if not p.is_dir():
+            raise NotFound("Imported directory not found")
+        return p
+    try:
+        return HARNESS_E.project_dir(project_id)
+    except ValueError as exc:
+        raise BadRequest(str(exc)) from exc
+
+
 @app.route("/")
 def index():
     return send_from_directory(app.static_folder, "index.html")
@@ -113,9 +152,12 @@ def api_content():
     if not project:
         raise BadRequest("Project is required")
     try:
-        full = HARNESS_E.content_file(project, path)
+        project_dir = _resolve_project_dir(project)
+        target = (project_dir / path).resolve()
+        target.relative_to(project_dir.resolve())
+        full = target
     except ValueError as exc:
-        raise BadRequest(str(exc)) from exc
+        raise BadRequest("Invalid path") from exc
     if not full.exists() or not full.is_file():
         raise NotFound("File not found")
     try:
@@ -191,13 +233,81 @@ def api_run():
 @app.route("/images/<path:filepath>")
 def serve_image(filepath):
     """Serve images from content directories."""
-    if not CONTENT_DIR.exists():
-        raise NotFound("Content directory not found")
-    roots = [d for d in CONTENT_DIR.iterdir() if d.is_dir() and not d.name.startswith(".")]
-    full = HARNESS_E.first_existing(roots, filepath)
-    if not full:
-        raise NotFound("Image not found")
-    return send_from_directory(str(full.parent), full.name)
+    if CONTENT_DIR.exists():
+        roots = [d for d in CONTENT_DIR.iterdir() if d.is_dir() and not d.name.startswith(".")]
+        full = HARNESS_E.first_existing(roots, filepath)
+        if full:
+            return send_from_directory(str(full.parent), full.name)
+    for info in _load_imported().values():
+        book_dir = Path(info["path"]).resolve()
+        if book_dir.is_dir():
+            try:
+                target = (book_dir / filepath).resolve()
+                target.relative_to(book_dir)
+                if target.exists():
+                    return send_from_directory(str(target.parent), target.name)
+            except ValueError:
+                continue
+    raise NotFound("Image not found")
+
+
+@app.route("/api/import", methods=["POST"])
+def api_import():
+    data = request.get_json(force=True)
+    folder = data.get("path", "").strip()
+    if not folder:
+        raise BadRequest("请输入文件夹路径")
+    src = Path(folder).resolve()
+    if not src.is_dir():
+        raise BadRequest(f"不是有效的目录: {folder}")
+    md_files = list(src.rglob("*.md"))
+    if not md_files:
+        raise BadRequest("该目录下没有找到 Markdown 文件")
+    safe_name = "".join(c if c.isalnum() or c in "-_一-鿿" else "-" for c in src.name).strip("-")
+    if not safe_name:
+        safe_name = "imported-book"
+    imported = _load_imported()
+    base = safe_name
+    counter = 1
+    while safe_name in imported or (CONTENT_DIR / safe_name).exists():
+        safe_name = f"{base}-{counter}"
+        counter += 1
+    imported[safe_name] = {
+        "path": str(src),
+        "label": data.get("name") or src.name,
+        "imported_at": __import__("datetime").datetime.now().isoformat(),
+    }
+    _save_imported(imported)
+    return jsonify({"id": safe_name, "label": imported[safe_name]["label"], "count": len(md_files)})
+
+
+@app.route("/api/import/<project_id>", methods=["DELETE"])
+def api_remove_import(project_id):
+    imported = _load_imported()
+    if project_id not in imported:
+        raise NotFound("Imported project not found")
+    del imported[project_id]
+    _save_imported(imported)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/browse")
+def api_browse():
+    path = request.args.get("path", "").strip()
+    target = Path(path).resolve() if path else Path.home()
+    if not target.is_dir():
+        raise BadRequest("Not a directory")
+    items = []
+    try:
+        for item in sorted(target.iterdir()):
+            if item.name.startswith("."):
+                continue
+            is_dir = item.is_dir()
+            items.append({"name": item.name, "path": str(item), "is_dir": is_dir})
+    except PermissionError:
+        pass
+    parent = str(target.parent) if str(target) != str(target.parent) else None
+    return jsonify({"path": str(target), "parent": parent, "items": items})
 
 
 if __name__ == "__main__":

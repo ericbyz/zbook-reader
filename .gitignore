@@ -24,3 +24,9 @@ build/
 
 # Logs
 *.log
+
+# Runtime data
+content/.imported.json
+
+# Temp screenshots
+*.png

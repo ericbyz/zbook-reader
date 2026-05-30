@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZBook - 教程阅读器</title>
+<title>ZBook</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
@@ -18,9 +18,11 @@
     --font-size: 17px;
     --line-height: 1.8;
     --article-width: 960px;
-    --bg: #0f1117;
-    --sidebar-bg: #161822;
-    --card-bg: #1a1d2e;
+    --bg: #0a0b10;
+    --bg-secondary: #0f1117;
+    --sidebar-bg: #111320;
+    --card-bg: #141625;
+    --card-hover: #1a1d2e;
     --text: #e0e0e6;
     --text-muted: #8b8fa3;
     --text-heading: #ffffff;
@@ -29,116 +31,310 @@
     --text-blockquote: #b0b4c8;
     --accent: #6c8aff;
     --accent-hover: #8aa3ff;
-    --border: #2a2d3e;
-    --code-bg: #12141f;
+    --accent-glow: rgba(108,138,255,.25);
+    --border: #1e2136;
+    --border-hover: #2d3150;
+    --code-bg: #0c0d14;
     --success: #4ade80;
     --error: #f87171;
     --warn: #fbbf24;
     --code-text: #c9d1d9;
   }
   :root.light {
-    --bg: #ffffff;
-    --sidebar-bg: #f7f8fb;
-    --card-bg: #eaecf3;
-    --text: #0d0f1a;
-    --text-muted: #3d4259;
-    --text-heading: #000000;
-    --text-heading3: #0d0f1a;
-    --text-heading4: #1a1d30;
-    --text-blockquote: #2e3348;
-    --accent: #2b4acb;
-    --accent-hover: #1e3ab5;
-    --border: #cdd1de;
+    --bg: #f5f6fa;
+    --bg-secondary: #ffffff;
+    --sidebar-bg: #f0f1f5;
+    --card-bg: #ffffff;
+    --card-hover: #f5f6fa;
+    --text: #1a1d30;
+    --text-muted: #6b7094;
+    --text-heading: #0d0f1a;
+    --text-heading3: #1a1d30;
+    --text-heading4: #2a2d48;
+    --text-blockquote: #3d4259;
+    --accent: #4361ee;
+    --accent-hover: #3a56d4;
+    --accent-glow: rgba(67,97,238,.15);
+    --border: #e2e4ed;
+    --border-hover: #c5c9de;
     --code-bg: #f0f1f6;
-    --success: #15803d;
-    --error: #b91c1c;
-    --warn: #b45309;
+    --success: #16a34a;
+    --error: #dc2626;
+    --warn: #d97706;
     --code-text: #1a1d30;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; font-family: -apple-system, "PingFang SC", "Noto Sans SC", "Helvetica Neue", sans-serif; background: var(--bg); color: var(--text); }
   a { color: var(--accent); text-decoration: none; }
-  a:hover { color: var(--accent-hover); text-decoration: underline; }
+  a:hover { color: var(--accent-hover); }
 
-  .landing {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 100vh; padding: 60px 24px;
-    animation: fadeIn .4s ease;
-  }
-  .landing-title {
-    font-size: 36px; font-weight: 800; color: var(--text-heading);
-    margin-bottom: 8px; letter-spacing: 1px;
-  }
-  .landing-sub {
-    font-size: 15px; color: var(--text-muted); margin-bottom: 48px;
-  }
-  .project-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px; width: 100%; max-width: 960px;
-  }
-  .project-card {
-    background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px;
-    padding: 28px 24px; cursor: pointer; transition: all .2s;
-    display: flex; flex-direction: column; gap: 10px;
-  }
-  .project-card:hover {
-    border-color: var(--accent); transform: translateY(-3px);
-    box-shadow: 0 8px 30px rgba(108,138,255,.12);
-  }
-  .project-card .card-icon { font-size: 36px; }
-  .project-card .card-label { font-size: 18px; font-weight: 700; color: var(--text-heading); }
-  .project-card .card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-  .project-card .card-count {
-    font-size: 12px; color: var(--accent); font-weight: 600; margin-top: auto;
-    padding-top: 10px; border-top: 1px solid var(--border);
-  }
+  /* ===== Error Toast ===== */
   .harness-error {
-    position: fixed; top: 14px; right: 14px; z-index: 200;
+    position: fixed; top: 14px; right: 14px; z-index: 500;
     max-width: min(420px, calc(100vw - 28px)); padding: 12px 14px;
-    border-radius: 8px; border: 1px solid rgba(248,113,113,.45);
-    background: rgba(127,29,29,.96); color: #fff; font-size: 13px;
+    border-radius: 10px; border: 1px solid rgba(248,113,113,.4);
+    background: rgba(127,29,29,.95); color: #fff; font-size: 13px;
     line-height: 1.45; box-shadow: 0 10px 28px rgba(0,0,0,.28);
+    backdrop-filter: blur(8px);
   }
   .harness-error button {
     float: right; margin-left: 12px; border: 0; background: transparent;
     color: #fff; cursor: pointer; font-size: 16px; line-height: 1;
   }
 
+  /* ===== Landing Page ===== */
+  .landing {
+    min-height: 100vh;
+    background: var(--bg);
+    animation: fadeIn .4s ease;
+  }
+  .landing.hidden { display: none; }
+
+  .landing-hero {
+    text-align: center;
+    padding: 72px 24px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .landing-hero::before {
+    content: '';
+    position: absolute;
+    top: -40%; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 400px;
+    background: radial-gradient(ellipse, var(--accent-glow), transparent 70%);
+    pointer-events: none;
+  }
+  .landing-logo {
+    width: 64px; height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #6c8aff 0%, #8b5cf6 100%);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 30px; font-weight: 800; color: #fff;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(108,138,255,.35);
+    position: relative;
+  }
+  .landing-title {
+    font-size: 32px; font-weight: 800; color: var(--text-heading);
+    margin-bottom: 6px; letter-spacing: -.5px; position: relative;
+  }
+  .landing-sub {
+    font-size: 15px; color: var(--text-muted); margin-bottom: 28px;
+    position: relative;
+  }
+  .import-trigger {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 26px; border-radius: 11px;
+    background: var(--accent); color: #fff; border: none;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all .2s;
+    box-shadow: 0 4px 18px var(--accent-glow);
+    position: relative;
+  }
+  .import-trigger:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px var(--accent-glow);
+  }
+  .import-trigger svg { width: 18px; height: 18px; }
+
+  .bookshelf {
+    max-width: 960px; margin: 0 auto;
+    padding: 0 24px 80px; width: 100%;
+  }
+  .bookshelf-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px; padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .bookshelf-header h2 {
+    font-size: 18px; font-weight: 700; color: var(--text-heading);
+  }
+  .book-count {
+    font-size: 13px; color: var(--text-muted); font-weight: 500;
+  }
+
+  .project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+  .project-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 14px; padding: 22px;
+    cursor: pointer; transition: all .2s;
+    display: flex; flex-direction: column; gap: 6px;
+    position: relative;
+  }
+  .project-card:hover {
+    border-color: var(--border-hover);
+    background: var(--card-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(0,0,0,.18);
+  }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; }
+  .card-icon { font-size: 30px; line-height: 1; }
+  .card-remove {
+    width: 26px; height: 26px; border-radius: 6px;
+    border: none; background: transparent; color: var(--text-muted);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; opacity: 0; transition: all .15s;
+  }
+  .project-card:hover .card-remove { opacity: 1; }
+  .card-remove:hover { background: rgba(248,113,113,.12); color: var(--error); }
+  .card-label { font-size: 16px; font-weight: 700; color: var(--text-heading); margin-top: 4px; }
+  .card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+  .card-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 12px; margin-top: auto;
+    border-top: 1px solid var(--border);
+  }
+  .card-count { font-size: 12px; color: var(--accent); font-weight: 600; }
+  .card-tag {
+    padding: 2px 8px; border-radius: 4px;
+    background: rgba(108,138,255,.1); color: var(--accent);
+    font-size: 11px; font-weight: 500;
+  }
+
+  .empty-state {
+    text-align: center; padding: 64px 24px; color: var(--text-muted);
+  }
+  .empty-icon { font-size: 44px; opacity: .35; margin-bottom: 14px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ===== Import Modal ===== */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 400; padding: 24px;
+    animation: fadeIn .15s ease;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay[hidden] { display: none !important; }
+  .modal {
+    background: var(--sidebar-bg); border: 1px solid var(--border);
+    border-radius: 16px; width: 100%; max-width: 460px;
+    box-shadow: 0 24px 64px rgba(0,0,0,.4);
+    overflow: hidden;
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 22px; border-bottom: 1px solid var(--border);
+  }
+  .modal-header h3 { font-size: 17px; font-weight: 700; color: var(--text-heading); }
+  .modal-close {
+    width: 30px; height: 30px; border-radius: 8px;
+    border: none; background: transparent; color: var(--text-muted);
+    cursor: pointer; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal-close:hover { background: var(--card-bg); color: var(--text); }
+  .modal-body { padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+  .modal-body label {
+    font-size: 12px; font-weight: 600; color: var(--text-muted);
+    letter-spacing: .3px; text-transform: uppercase;
+  }
+  .modal-body input {
+    width: 100%; padding: 10px 14px; border-radius: 10px;
+    background: var(--card-bg); border: 1px solid var(--border);
+    color: var(--text); font-size: 14px; outline: none;
+    transition: border-color .2s;
+  }
+  .modal-body input:focus { border-color: var(--accent); }
+  .modal-body input::placeholder { color: var(--text-muted); opacity: .6; }
+  .modal-footer {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 14px 22px; border-top: 1px solid var(--border);
+  }
+  .btn-secondary {
+    padding: 8px 20px; border-radius: 8px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--text-muted); font-size: 13px; cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-secondary:hover { background: var(--card-bg); color: var(--text); }
+  .btn-primary {
+    padding: 8px 22px; border-radius: 8px; border: none;
+    background: var(--accent); color: #fff;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+  .import-status {
+    padding: 10px 22px; font-size: 13px; line-height: 1.4;
+  }
+  .import-status.success { color: var(--success); background: rgba(74,222,128,.06); }
+  .import-status.error { color: var(--error); background: rgba(248,113,113,.06); }
+
+  .browse-path {
+    padding: 8px 12px; border-radius: 8px;
+    background: var(--card-bg); border: 1px solid var(--border);
+    font-size: 12px; font-family: "JetBrains Mono", "Menlo", monospace;
+    color: var(--text-muted); margin-bottom: 8px;
+    white-space: nowrap; overflow-x: auto; text-overflow: ellipsis;
+  }
+  .browse-list {
+    max-height: 340px; overflow-y: auto;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--card-bg);
+  }
+  .browse-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 14px; cursor: pointer; font-size: 13px;
+    color: var(--text); border-bottom: 1px solid var(--border);
+    transition: background .1s;
+  }
+  .browse-item:last-child { border-bottom: none; }
+  .browse-item:hover { background: rgba(108,138,255,.06); }
+  .browse-item.parent { color: var(--text-muted); }
+  .browse-item .item-icon { font-size: 15px; flex-shrink: 0; width: 20px; text-align: center; }
+  .browse-item .item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .browse-empty {
+    padding: 28px; text-align: center; color: var(--text-muted); font-size: 13px;
+  }
+  .modal-footer .name-input {
+    flex: 1; padding: 7px 12px; border-radius: 8px;
+    background: var(--card-bg); border: 1px solid var(--border);
+    color: var(--text); font-size: 13px; outline: none;
+  }
+  .modal-footer .name-input:focus { border-color: var(--accent); }
+
+  /* ===== App (Reading View) ===== */
   .app { display: none; height: 100vh; }
   .app.active { display: flex; }
-  .landing.hidden { display: none; }
 
   .sidebar {
     width: var(--sidebar-w); min-width: var(--sidebar-w);
     background: var(--sidebar-bg); border-right: 1px solid var(--border);
     display: flex; flex-direction: column; overflow: hidden;
   }
-  .sidebar-header { padding: 20px 16px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-  .sidebar-header h1 { font-size: 20px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
-  .sidebar-header p { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .sidebar-header { padding: 18px 16px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .sidebar-header h1 { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: .5px; }
+  .sidebar-header p { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
   .back-btn {
-    width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
     background: var(--card-bg); color: var(--text-muted); cursor: pointer;
-    font-size: 16px; display: flex; align-items: center; justify-content: center;
+    font-size: 15px; display: flex; align-items: center; justify-content: center;
     transition: all .15s; flex-shrink: 0;
   }
   .back-btn:hover { color: var(--text); border-color: var(--accent); }
-  .search-box { padding: 12px 16px; }
+  .search-box { padding: 10px 14px; }
   .search-box input {
-    width: 100%; padding: 8px 12px; border-radius: 8px;
+    width: 100%; padding: 7px 12px; border-radius: 8px;
     background: var(--card-bg); border: 1px solid var(--border);
     color: var(--text); font-size: 13px; outline: none; transition: border-color .2s;
   }
   .search-box input:focus { border-color: var(--accent); }
-  .sidebar-nav { flex: 1; overflow-y: auto; padding: 8px 0; }
-  .nav-group { margin-bottom: 4px; }
+  .sidebar-nav { flex: 1; overflow-y: auto; padding: 6px 0; }
   .nav-item {
-    display: block; padding: 6px 16px 6px 24px; font-size: 13px;
+    display: block; padding: 5px 16px 5px 24px; font-size: 13px;
     color: var(--text-muted); cursor: pointer; border-left: 3px solid transparent;
     transition: all .15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .nav-item:hover { background: rgba(108,138,255,.08); color: var(--text); }
-  .nav-item.active { color: var(--accent); background: rgba(108,138,255,.1); border-left-color: var(--accent); }
+  .nav-item:hover { background: rgba(108,138,255,.06); color: var(--text); }
+  .nav-item.active { color: var(--accent); background: rgba(108,138,255,.08); border-left-color: var(--accent); }
 
   .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
   .main-content { flex: 1; overflow-y: auto; }
@@ -147,7 +343,7 @@
     max-width: var(--article-width); margin: 0 auto; padding: 40px 48px 80px;
     animation: fadeIn .3s ease;
   }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
   .article h1 { font-size: 28px; margin: 0 0 24px; padding-bottom: 12px; border-bottom: 2px solid var(--border); }
   .article h2 { font-size: 22px; margin: 40px 0 16px; color: var(--text-heading); }
@@ -175,7 +371,7 @@
   }
   .code-header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 16px; background: rgba(255,255,255,.04); border-bottom: 1px solid var(--border);
+    padding: 8px 16px; background: rgba(255,255,255,.03); border-bottom: 1px solid var(--border);
   }
   .code-lang { font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; font-weight: 600; }
   .run-btn {
@@ -185,10 +381,8 @@
   .run-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
   .run-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
   .run-btn.running { background: var(--warn); color: #000; }
-
   .code-wrapper pre { margin: 0; padding: 16px; overflow-x: auto; }
   .code-wrapper code { font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace; font-size: 13px; line-height: 1.6; }
-
   .code-output {
     border-top: 1px solid var(--border); padding: 12px 16px;
     font-family: "JetBrains Mono", monospace; font-size: 13px;
@@ -201,13 +395,11 @@
     color: var(--text-muted); margin-bottom: 6px; font-weight: 600;
   }
   .code-output img { max-width: 100%; border-radius: 6px; margin: 8px 0; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
-
   .article code:not(pre code) {
     background: var(--card-bg); padding: 2px 6px; border-radius: 4px;
     font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--code-text);
     border: 1px solid var(--border);
   }
-
   .katex-display { margin: 16px 0; overflow-x: auto; }
 
   .toolbar {
@@ -217,18 +409,16 @@
   }
   .toolbar-group {
     display: flex; align-items: center; gap: 2px;
-    padding: 0 8px;
-    border-right: 1px solid var(--border);
+    padding: 0 8px; border-right: 1px solid var(--border);
   }
   .toolbar-group:last-child { border-right: none; }
   .toolbar-btn {
-    width: 32px; height: 32px; border-radius: 6px; border: none; cursor: pointer;
-    background: transparent; color: var(--text-muted); font-size: 16px;
+    width: 30px; height: 30px; border-radius: 6px; border: none; cursor: pointer;
+    background: transparent; color: var(--text-muted); font-size: 15px;
     display: flex; align-items: center; justify-content: center;
     transition: all .15s;
   }
   .toolbar-btn:hover { background: var(--card-bg); color: var(--text); }
-  .toolbar-btn.active { color: var(--accent); background: rgba(108,138,255,.12); }
   .toolbar-label {
     font-size: 12px; color: var(--text-muted); min-width: 32px; text-align: center;
     user-select: none;
@@ -239,15 +429,15 @@
     line-height: var(--line-height);
   }
 
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #3a3d4e; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #4a4d5e; }
+  ::-webkit-scrollbar-thumb { background: #2a2d3e; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3a3d4e; }
 
   .menu-toggle {
     display: none; position: fixed; top: 12px; left: 12px; z-index: 100;
-    width: 40px; height: 40px; border-radius: 10px; background: var(--card-bg);
-    border: 1px solid var(--border); color: var(--text); font-size: 20px;
+    width: 38px; height: 38px; border-radius: 10px; background: var(--card-bg);
+    border: 1px solid var(--border); color: var(--text); font-size: 18px;
     cursor: pointer; align-items: center; justify-content: center;
   }
   @media (max-width: 768px) {
@@ -256,28 +446,69 @@
     .sidebar.open { left: 0; }
     .article { padding: 20px 16px 60px; }
     .project-grid { grid-template-columns: 1fr; }
+    .landing-hero { padding: 56px 20px 36px; }
+    .bookshelf { padding: 0 16px 60px; }
   }
 </style>
 </head>
 <body>
 
 <div class="harness-error" id="harnessError" hidden>
-  <button type="button" aria-label="关闭" onclick="hideHarnessError()">×</button>
+  <button type="button" aria-label="关闭" onclick="hideHarnessError()">&times;</button>
   <span id="harnessErrorText"></span>
 </div>
 
+<!-- ===== Landing Page ===== -->
 <div class="landing" id="landing">
-  <div class="landing-title">ZBook</div>
-  <div class="landing-sub">选择一个文档项目开始阅读</div>
-  <div class="project-grid" id="projectGrid"></div>
+  <div class="landing-hero">
+    <div class="landing-logo">Z</div>
+    <h1 class="landing-title">ZBook</h1>
+    <p class="landing-sub">导入书籍文件夹，开始阅读</p>
+    <button class="import-trigger" onclick="showImportDialog()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      导入书籍文件夹
+    </button>
+  </div>
+  <div class="bookshelf">
+    <div class="bookshelf-header">
+      <h2>我的书架</h2>
+      <span class="book-count" id="bookCount"></span>
+    </div>
+    <div class="project-grid" id="projectGrid"></div>
+    <div class="empty-state" id="emptyState" hidden>
+      <div class="empty-icon">&#128218;</div>
+      <p>还没有书籍，点击上方按钮导入</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Import Modal ===== -->
+<div class="modal-overlay" id="importModal" hidden onclick="if(event.target===this)hideImportDialog()">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h3>导入书籍</h3>
+      <button class="modal-close" onclick="hideImportDialog()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="browse-path" id="browsePath"></div>
+      <div class="browse-list" id="browseList"></div>
+    </div>
+    <div class="import-status" id="importStatus" hidden></div>
+    <div class="modal-footer">
+      <input type="text" class="name-input" id="importName" placeholder="显示名称（可选）">
+      <button class="btn-secondary" onclick="hideImportDialog()">取消</button>
+      <button class="btn-primary" id="importBtn" onclick="doImport()">选择此文件夹</button>
+    </div>
+  </div>
 </div>
 
 <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">&#9776;</button>
 
+<!-- ===== Reading View ===== -->
 <div class="app" id="app">
   <aside class="sidebar">
     <div class="sidebar-header">
-      <button class="back-btn" onclick="goHome()" title="返回项目列表">&#8592;</button>
+      <button class="back-btn" onclick="goHome()" title="返回书架">&#8592;</button>
       <div>
         <h1 id="projectTitle">ZBook</h1>
         <p id="projectDesc"></p>
@@ -295,7 +526,7 @@
       </div>
       <div class="toolbar-group">
         <button class="toolbar-btn" onclick="changeFontSize(-1)" title="缩小字体">A-</button>
-        <span class="toolbar-label" id="fontSizeLabel">15</span>
+        <span class="toolbar-label" id="fontSizeLabel">17</span>
         <button class="toolbar-btn" onclick="changeFontSize(1)" title="放大字体">A+</button>
       </div>
       <div class="toolbar-group">
@@ -311,7 +542,7 @@
     </div>
     <div class="main-content" id="mainContent">
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);text-align:center;padding:40px;">
-        <div style="font-size:48px;margin-bottom:20px;opacity:.4;">&#128218;</div>
+        <div style="font-size:44px;margin-bottom:18px;opacity:.35;">&#128218;</div>
         <p>从左侧选择一篇文章开始阅读</p>
       </div>
     </div>
@@ -327,28 +558,21 @@ function showHarnessError(message) {
   document.getElementById('harnessErrorText').textContent = message || '请求失败';
   box.hidden = false;
 }
-
 function hideHarnessError() {
   document.getElementById('harnessError').hidden = true;
 }
 
 async function apiFetch(url, options) {
   var resp;
-  try {
-    resp = await fetch(url, options);
-  } catch (e) {
-    throw new Error('无法连接到本地服务：' + e.message);
-  }
+  try { resp = await fetch(url, options); }
+  catch (e) { throw new Error('无法连接到服务：' + e.message); }
   var data;
-  try {
-    data = await resp.json();
-  } catch (e) {
+  try { data = await resp.json(); }
+  catch (e) {
     if (!resp.ok) throw new Error('服务返回错误：HTTP ' + resp.status);
     throw new Error('服务返回了无法解析的数据');
   }
-  if (!resp.ok || data.error) {
-    throw new Error(data.error || ('HTTP ' + resp.status));
-  }
+  if (!resp.ok || data.error) throw new Error(data.error || ('HTTP ' + resp.status));
   return data;
 }
 
@@ -366,10 +590,7 @@ function escapeHtml(s) {
 
 function protectMath(text) {
   var mathStore = [];
-  function store(m) {
-    mathStore.push(m);
-    return '%%MATH' + (mathStore.length - 1) + '%%';
-  }
+  function store(m) { mathStore.push(m); return '%%MATH' + (mathStore.length - 1) + '%%'; }
   text = text.replace(/\$\$([\s\S]*?)\$\$/g, function(m) { return store(m); });
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, function(m) { return store(m); });
   text = text.replace(/\\\(([\s\S]*?)\\\)/g, function(m) { return store(m); });
@@ -383,87 +604,160 @@ function restoreMath(html, mathStore) {
 
 function highlightCode(code, lang) {
   try {
-    if (lang && hljs.getLanguage(lang)) {
-      return hljs.highlight(code, { language: lang }).value;
-    }
+    if (lang && hljs.getLanguage(lang)) return hljs.highlight(code, { language: lang }).value;
     return hljs.highlightAuto(code).value;
   } catch { return escapeHtml(code); }
 }
 
 var codeExtension = {
-  name: 'codeBlock',
-  level: 'block',
+  name: 'codeBlock', level: 'block',
   start: function(src) { return src.indexOf('\n```'); },
   tokenizer: function(src) {
     var match = src.match(/^```(\w*)\n([\s\S]*?)\n```/);
     if (!match) return;
     var id = 'cb_' + (codeBlockId++);
     state.codeBlocks[id] = { code: match[2], lang: match[1] || 'text' };
-    return {
-      type: 'codeBlock',
-      raw: match[0],
-      id: id,
-      lang: state.codeBlocks[id].lang,
-    };
+    return { type: 'codeBlock', raw: match[0], id: id, lang: state.codeBlocks[id].lang };
   },
   renderer: function(token) {
     var block = state.codeBlocks[token.id];
-    var code = block.code;
-    var lang = block.lang;
-    var highlighted = highlightCode(code, lang);
-    var isRunnable = lang === 'python' || lang === 'py';
+    var highlighted = highlightCode(block.code, block.lang);
+    var isRunnable = block.lang === 'python' || block.lang === 'py';
     var runBtn = isRunnable ? '<button class="run-btn" data-cb-id="' + token.id + '">运行</button>' : '';
-    return '<div class="code-wrapper">'
-      + '<div class="code-header">'
-      + '<span class="code-lang">' + escapeHtml(lang) + '</span>'
-      + runBtn
-      + '</div>'
-      + '<pre><code class="hljs">' + highlighted + '</code></pre>'
-      + '</div>';
+    return '<div class="code-wrapper"><div class="code-header"><span class="code-lang">' + escapeHtml(block.lang) + '</span>' + runBtn + '</div><pre><code class="hljs">' + highlighted + '</code></pre></div>';
   },
 };
-
 marked.use({ extensions: [codeExtension] });
 
-// --- Landing page ---
+// ===== Landing Page =====
 async function loadProjects() {
   try {
     state.projects = await apiFetch('/api/projects');
     renderProjects();
-  } catch (e) {
-    showHarnessError(e.message);
-  }
+  } catch (e) { showHarnessError(e.message); }
 }
 
 function renderProjects() {
   var grid = document.getElementById('projectGrid');
   grid.textContent = '';
+  var countEl = document.getElementById('bookCount');
+  var empty = document.getElementById('emptyState');
+  countEl.textContent = state.projects.length + ' 本书';
+
+  if (!state.projects.length) { empty.hidden = false; return; }
+  empty.hidden = true;
+
   state.projects.forEach(function(p) {
     var card = document.createElement('div');
     card.className = 'project-card';
-    card.setAttribute('data-project', p.id);
-    card.innerHTML = '<div class="card-icon">' + p.icon + '</div>'
+    var removeBtn = p.imported
+      ? '<button class="card-remove" onclick="event.stopPropagation();removeImport(\'' + p.id + '\')" title="移除">&times;</button>'
+      : '';
+    var tag = p.imported ? '<span class="card-tag">已导入</span>' : '';
+    card.innerHTML = '<div class="card-top"><div class="card-icon">' + p.icon + '</div>' + removeBtn + '</div>'
       + '<div class="card-label">' + escapeHtml(p.label) + '</div>'
       + '<div class="card-desc">' + escapeHtml(p.desc) + '</div>'
-      + '<div class="card-count">' + p.count + ' 篇文档</div>';
+      + '<div class="card-footer"><span class="card-count">' + p.count + ' 篇文档</span>' + tag + '</div>';
     card.addEventListener('click', function() { openProject(p.id); });
     grid.appendChild(card);
   });
 }
 
+// ===== Import =====
+var browsePath = '';
+
+function showImportDialog() {
+  document.getElementById('importModal').hidden = false;
+  document.getElementById('importName').value = '';
+  document.getElementById('importStatus').hidden = true;
+  browseTo('');
+}
+function hideImportDialog() { document.getElementById('importModal').hidden = true; }
+
+async function browseTo(path) {
+  try {
+    var data = await apiFetch('/api/browse?path=' + encodeURIComponent(path || ''));
+    browsePath = data.path;
+    document.getElementById('browsePath').textContent = data.path;
+    renderBrowseList(data);
+  } catch (e) { showHarnessError(e.message); }
+}
+
+function renderBrowseList(data) {
+  var list = document.getElementById('browseList');
+  list.textContent = '';
+  if (data.parent !== null) {
+    var parentItem = document.createElement('div');
+    parentItem.className = 'browse-item parent';
+    parentItem.innerHTML = '<span class="item-icon">📁</span><span class="item-name">..</span>';
+    parentItem.addEventListener('click', function() { browseTo(data.parent); });
+    list.appendChild(parentItem);
+  }
+  var dirs = data.items.filter(function(i) { return i.is_dir; });
+  dirs.forEach(function(item) {
+    var el = document.createElement('div');
+    el.className = 'browse-item';
+    var icon = document.createElement('span');
+    icon.className = 'item-icon'; icon.textContent = '📁';
+    var nameSpan = document.createElement('span');
+    nameSpan.className = 'item-name'; nameSpan.textContent = item.name;
+    el.appendChild(icon); el.appendChild(nameSpan);
+    el.addEventListener('click', function() { browseTo(item.path); });
+    list.appendChild(el);
+  });
+  if (!dirs.length) {
+    var empty = document.createElement('div');
+    empty.className = 'browse-empty';
+    empty.textContent = '此目录下没有子文件夹';
+    list.appendChild(empty);
+  }
+}
+
+async function doImport() {
+  if (!browsePath) return;
+  var name = document.getElementById('importName').value.trim();
+  var body = { path: browsePath };
+  if (name) body.name = name;
+  var btn = document.getElementById('importBtn');
+  btn.disabled = true; btn.textContent = '导入中...';
+  try {
+    var result = await apiFetch('/api/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    showImportStatus('success', '导入成功！「' + result.label + '」共 ' + result.count + ' 篇文档');
+    setTimeout(function() { hideImportDialog(); loadProjects(); }, 800);
+  } catch (e) {
+    showImportStatus('error', e.message);
+  }
+  btn.disabled = false; btn.textContent = '选择此文件夹';
+}
+
+function showImportStatus(type, msg) {
+  var el = document.getElementById('importStatus');
+  el.className = 'import-status ' + type;
+  el.textContent = msg;
+  el.hidden = false;
+}
+
+async function removeImport(projectId) {
+  if (!confirm('确定要移除这本书吗？（原始文件不会被删除）')) return;
+  try {
+    await apiFetch('/api/import/' + encodeURIComponent(projectId), { method: 'DELETE' });
+    loadProjects();
+  } catch (e) { showHarnessError(e.message); }
+}
+
+// ===== Open Project =====
 async function openProject(projectId) {
   state.currentProject = projectId;
-  codeBlockId = 0;
-  state.codeBlocks = {};
-  state.currentPath = null;
-
+  codeBlockId = 0; state.codeBlocks = {}; state.currentPath = null;
   var project = state.projects.find(function(p) { return p.id === projectId; });
   document.getElementById('projectTitle').textContent = project ? project.label : projectId;
   document.getElementById('projectDesc').textContent = project ? project.desc : '';
-
   document.getElementById('landing').classList.add('hidden');
   document.getElementById('app').classList.add('active');
-
   try {
     state.files = await apiFetch('/api/files/' + encodeURIComponent(projectId));
     renderSidebar();
@@ -472,30 +766,22 @@ async function openProject(projectId) {
     state.files = [];
     renderSidebar();
   }
-
-  var placeholder = document.createElement('div');
-  placeholder.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);text-align:center;padding:40px;';
-  var icon = document.createElement('div');
-  icon.style.cssText = 'font-size:48px;margin-bottom:20px;opacity:.4;';
-  icon.textContent = '\u{1F4DA}';
-  var msg = document.createElement('p');
-  msg.textContent = '从左侧选择一篇文章开始阅读';
-  placeholder.appendChild(icon);
-  placeholder.appendChild(msg);
+  var ph = document.createElement('div');
+  ph.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);text-align:center;padding:40px;';
+  ph.innerHTML = '<div style="font-size:44px;margin-bottom:18px;opacity:.35;">&#128218;</div><p>从左侧选择一篇文章开始阅读</p>';
   document.getElementById('mainContent').textContent = '';
-  document.getElementById('mainContent').appendChild(placeholder);
+  document.getElementById('mainContent').appendChild(ph);
 }
 
 function goHome() {
-  state.currentProject = null;
-  state.files = [];
-  state.currentPath = null;
+  state.currentProject = null; state.files = []; state.currentPath = null;
   document.getElementById('app').classList.remove('active');
   document.getElementById('landing').classList.remove('hidden');
   document.querySelector('.sidebar').classList.remove('open');
+  loadProjects();
 }
 
-// --- Sidebar ---
+// ===== Sidebar =====
 function renderSidebar(filter) {
   var nav = document.getElementById('sidebarNav');
   nav.textContent = '';
@@ -510,23 +796,17 @@ function renderSidebar(filter) {
     nav.appendChild(item);
   });
 }
-
 document.getElementById('sidebarNav').addEventListener('click', function(e) {
   var item = e.target.closest('.nav-item');
   if (item) loadDoc(item.getAttribute('data-path'));
 });
-
-function filterFiles() {
-  renderSidebar(document.getElementById('searchInput').value);
-}
+function filterFiles() { renderSidebar(document.getElementById('searchInput').value); }
 
 async function loadDoc(path) {
   state.currentPath = path;
-  codeBlockId = 0;
-  state.codeBlocks = {};
+  codeBlockId = 0; state.codeBlocks = {};
   renderSidebar(document.getElementById('searchInput').value);
   document.querySelector('.sidebar').classList.remove('open');
-
   var data;
   try {
     data = await apiFetch('/api/content?project=' + encodeURIComponent(state.currentProject) + '&path=' + encodeURIComponent(path));
@@ -534,12 +814,7 @@ async function loadDoc(path) {
     showHarnessError(e.message);
     var errDiv = document.createElement('div');
     errDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;';
-    var h = document.createElement('h2');
-    h.textContent = '加载失败';
-    var p = document.createElement('p');
-    p.textContent = e.message;
-    errDiv.appendChild(h);
-    errDiv.appendChild(p);
+    errDiv.innerHTML = '<h2>加载失败</h2><p>' + escapeHtml(e.message) + '</p>';
     document.getElementById('mainContent').textContent = '';
     document.getElementById('mainContent').appendChild(errDiv);
     return;
@@ -550,25 +825,16 @@ async function loadDoc(path) {
 function renderMarkdown(content, filePath) {
   var main = document.getElementById('mainContent');
   var dir = filePath.substring(0, filePath.lastIndexOf('/'));
-
   var protected = protectMath(content);
   var rawHtml;
-  try { rawHtml = marked.parse(protected.text); }
-  catch(e) { rawHtml = marked(protected.text); }
-
+  try { rawHtml = marked.parse(protected.text); } catch(e) { rawHtml = marked(protected.text); }
   rawHtml = restoreMath(rawHtml, protected.mathStore);
-
-  var cleanHtml = DOMPurify.sanitize(rawHtml, {
-    ADD_TAGS: ['button'],
-    ADD_ATTR: ['onclick', 'data-cb-id', 'target'],
-  });
-
+  var cleanHtml = DOMPurify.sanitize(rawHtml, { ADD_TAGS: ['button'], ADD_ATTR: ['onclick', 'data-cb-id', 'target'] });
   var article = document.createElement('div');
   article.className = 'article';
   article.innerHTML = cleanHtml;
   main.textContent = '';
   main.appendChild(article);
-
   renderMathInElement(main, {
     delimiters: [
       { left: '$$', right: '$$', display: true },
@@ -578,7 +844,6 @@ function renderMarkdown(content, filePath) {
     ],
     throwOnError: false,
   });
-
   article.querySelectorAll('a').forEach(function(a) {
     var href = a.getAttribute('href');
     if (href && !href.startsWith('http') && !href.startsWith('#') && href.endsWith('.md')) {
@@ -598,92 +863,46 @@ async function runCode(btn) {
   var cbId = btn.getAttribute('data-cb-id');
   var block = state.codeBlocks[cbId];
   if (!block) return;
-  var code = block.code;
-
   var wrapper = btn.closest('.code-wrapper');
   var prev = wrapper.querySelector('.code-output');
   if (prev) prev.remove();
-
-  btn.disabled = true;
-  btn.textContent = '运行中...';
-  btn.classList.add('running');
-
+  btn.disabled = true; btn.textContent = '运行中...'; btn.classList.add('running');
   try {
     var result = await apiFetch('/api/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: code }),
+      body: JSON.stringify({ code: block.code }),
     });
-
     var outputDiv = document.createElement('div');
     outputDiv.className = 'code-output';
-
     if (result.stdout) {
-      var label = document.createElement('div');
-      label.className = 'output-label';
-      label.textContent = '输出';
-      outputDiv.appendChild(label);
-      var out = document.createElement('div');
-      out.className = 'stdout';
-      out.textContent = result.stdout;
-      outputDiv.appendChild(out);
+      outputDiv.innerHTML += '<div class="output-label">输出</div><div class="stdout">' + escapeHtml(result.stdout) + '</div>';
     }
     if (result.stderr) {
-      var label2 = document.createElement('div');
-      label2.className = 'output-label';
-      label2.style.marginTop = '8px';
-      label2.textContent = '错误';
-      outputDiv.appendChild(label2);
-      var errEl = document.createElement('div');
-      errEl.className = 'stderr';
-      errEl.textContent = result.stderr;
-      outputDiv.appendChild(errEl);
+      outputDiv.innerHTML += '<div class="output-label" style="margin-top:8px">错误</div><div class="stderr">' + escapeHtml(result.stderr) + '</div>';
     }
     if (result.images && result.images.length) {
-      var label3 = document.createElement('div');
-      label3.className = 'output-label';
-      label3.style.marginTop = '8px';
-      label3.textContent = '图表';
-      outputDiv.appendChild(label3);
-      result.images.forEach(function(src) {
-        var img = document.createElement('img');
-        img.src = src;
-        img.alt = 'output figure';
-        outputDiv.appendChild(img);
-      });
+      outputDiv.innerHTML += '<div class="output-label" style="margin-top:8px">图表</div>';
+      result.images.forEach(function(src) { outputDiv.innerHTML += '<img src="' + src + '" alt="output">'; });
     }
     if (!result.stdout && !result.stderr && (!result.images || !result.images.length)) {
-      var out2 = document.createElement('div');
-      out2.className = 'stdout';
-      out2.style.color = 'var(--text-muted)';
-      out2.textContent = '（无输出）';
-      outputDiv.appendChild(out2);
+      outputDiv.innerHTML += '<div class="stdout" style="color:var(--text-muted)">（无输出）</div>';
     }
-
     wrapper.appendChild(outputDiv);
-    btn.textContent = '已运行';
-    btn.classList.remove('running');
+    btn.textContent = '已运行'; btn.classList.remove('running');
     setTimeout(function() { btn.textContent = '运行'; }, 1500);
   } catch (e) {
     showHarnessError(e.message);
-    var outputDiv2 = document.createElement('div');
-    outputDiv2.className = 'code-output';
-    var errEl2 = document.createElement('div');
-    errEl2.className = 'stderr';
-    errEl2.textContent = '请求失败: ' + e.message;
-    outputDiv2.appendChild(errEl2);
-    wrapper.appendChild(outputDiv2);
-    btn.textContent = '运行';
-    btn.classList.remove('running');
+    var od = document.createElement('div'); od.className = 'code-output';
+    od.innerHTML = '<div class="stderr">请求失败: ' + escapeHtml(e.message) + '</div>';
+    wrapper.appendChild(od);
+    btn.textContent = '运行'; btn.classList.remove('running');
   }
   btn.disabled = false;
 }
 
-// --- Theme, Font, LineHeight, Width ---
-var currentFontSize = 17;
-var currentLineHeight = 1.8;
-var currentWidth = 960;
-var isDark = true;
+// ===== Settings =====
+var currentFontSize = 17, currentLineHeight = 1.8, currentWidth = 960, isDark = true;
 
 function toggleTheme() {
   isDark = !isDark;
@@ -691,38 +910,32 @@ function toggleTheme() {
   var btn = document.getElementById('themeBtn');
   btn.textContent = isDark ? '☸' : '☀';
   btn.title = isDark ? '切换到白日模式' : '切换到黑夜模式';
-  var link = document.getElementById('hljs-theme');
-  link.href = isDark
+  document.getElementById('hljs-theme').href = isDark
     ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
     : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
   try { localStorage.setItem('zbook-theme', isDark ? 'dark' : 'light'); } catch(e) {}
 }
-
 function changeFontSize(delta) {
   currentFontSize = Math.max(12, Math.min(28, currentFontSize + delta));
   document.documentElement.style.setProperty('--font-size', currentFontSize + 'px');
   document.getElementById('fontSizeLabel').textContent = currentFontSize;
   try { localStorage.setItem('zbook-fontsize', currentFontSize); } catch(e) {}
 }
-
 function changeLineHeight(delta) {
   currentLineHeight = Math.max(1.2, Math.min(3.0, Math.round((currentLineHeight + delta * 0.2) * 10) / 10));
   document.documentElement.style.setProperty('--line-height', currentLineHeight);
   document.getElementById('lineHeightLabel').textContent = currentLineHeight.toFixed(1);
   try { localStorage.setItem('zbook-lineheight', currentLineHeight); } catch(e) {}
 }
-
 function changeWidth(delta) {
   currentWidth = Math.max(600, Math.min(1600, currentWidth + delta));
   document.documentElement.style.setProperty('--article-width', currentWidth + 'px');
   document.getElementById('widthLabel').textContent = currentWidth;
   try { localStorage.setItem('zbook-width', currentWidth); } catch(e) {}
 }
-
 function restoreSettings() {
   try {
-    var theme = localStorage.getItem('zbook-theme');
-    if (theme === 'light') toggleTheme();
+    if (localStorage.getItem('zbook-theme') === 'light') toggleTheme();
     var fs = localStorage.getItem('zbook-fontsize');
     if (fs) { currentFontSize = parseInt(fs); changeFontSize(0); }
     var lh = localStorage.getItem('zbook-lineheight');
